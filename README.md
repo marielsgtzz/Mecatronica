@@ -1,2 +1,4 @@
-# Mecatronica
-Repositorio clase Principios de Mecatrónica ITAM Otoño 2023
+# Principios de Mecatrónica
+Repositorio para la clase de Principios de Mecatrónica ITAM Otoño 2023
+
+Práctica 1
