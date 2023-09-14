@@ -1,0 +1,33 @@
+#define LED 18
+#define FotoR 15
+
+int val; // Variable que mide la luz detectada por la fotoresistencia
+int ind; // Variable que representa el indicador para el brillo del LED
+
+void setup() {
+  Serial.begin(115200); // Inicializa la comunicación serial a 115200 baudios
+  pinMode(FotoR, INPUT); // Configura el pin de la fotoresistencia como entrada
+  pinMode(LED, OUTPUT); // Configura el pin del LED como salida
+}
+
+void loop() {
+  val = analogRead(FotoR); // Lee el valor del divisor de voltaje de la fotoresistencia
+  
+  // Mapea el valor leído al rango de brillo del LED (0-255)
+  ind = map(val, 0, 1023, 255, 0);
+  ind = constrain(ind, 0, 255); // Restringe el valor del brillo dentro del rango 0-255
+
+  if (ind > 0) { // Si el indicador es mayor que cero, significa que no se está detectando luz
+    digitalWrite(LED, HIGH); // Enciende el LED
+  } else {
+    digitalWrite(LED, LOW); // Si la fotoresistencia está detectando luz, el indicador tiende a cero, y el LED se apaga
+  }
+
+  // Impresiones en el puerto serial
+  Serial.print("Luz detectada por el fotoresistor: ");
+  Serial.print(val); // Imprime el valor leído de la fotoresistencia
+  Serial.print(", Indicador de luz del LED: ");
+  Serial.print(ind); // Imprime el indicador de brillo del LED
+  Serial.println();
+  delay(100);
+}
