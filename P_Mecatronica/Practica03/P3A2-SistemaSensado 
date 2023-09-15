@@ -1,0 +1,158 @@
+// Definición de pines de los sensores y otros componentes
+#define SENSOR_1 A1
+#define SENSOR_2 A2
+#define SENSOR_3 A3
+#define OBSTACLE_SENSOR 12
+#define FotoR A0
+#define echoPin 13
+#define trigPin 2
+#define UMBRAL_LUMINOSIDAD 1013
+
+// Pines de los LEDs
+int leds[6] = {3, 5, 6, 9, 10, 11};
+
+// Variables globales
+int val; 
+bool bandera1 = false;
+bool bandera2 = false;
+bool bandera3 = false;
+int duracion;
+int distancia;
+
+// Función de configuración inicial
+void setup() {
+  // Iniciar comunicación serial
+  Serial.begin(115200);
+
+  // Configurar pines como entradas o salidas
+  pinMode(FotoR, INPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(OBSTACLE_SENSOR, INPUT);
+  for (int i = 0; i < 6; i++) {
+    pinMode(leds[i], OUTPUT);
+  }
+}
+
+// Función para medir distancia con el sensor ultrasónico
+int Ultrasonic(){
+  // Configurar el pulso para el sensor ultrasónico
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Leer la duración del pulso
+  duracion = pulseIn(echoPin, HIGH);
+
+  // Calcular la distancia
+  distancia = 0.0343 * duracion * 0.5;
+
+  return distancia;
+}
+
+// Función principal que se ejecuta continuamente
+void loop() {
+  // Leer valores de los sensores
+  int valorSensor1 = analogRead(SENSOR_1);
+  int valorSensor2 = analogRead(SENSOR_2);
+  int valorSensor3 = analogRead(SENSOR_3);
+
+  // Comprobar cuál sensor está activo
+  if (valorSensor1 > UMBRAL_LUMINOSIDAD) {
+    bandera1 = true;
+    bandera2 = false;
+    bandera3 = false;
+  } 
+  else if (valorSensor2 > UMBRAL_LUMINOSIDAD) {
+    bandera1 = false;
+    bandera2 = true;
+    bandera3 = false;
+  } 
+  else if (valorSensor3 > UMBRAL_LUMINOSIDAD) {
+    bandera1 = false;
+    bandera2 = false;
+    bandera3 = true;
+  } 
+  else {
+    bandera1 = false;
+    bandera2 = false;
+    bandera3 = false;
+  }
+
+  // Rutinas según el sensor activo
+  if (bandera1) {
+    // Sensor de obstáculos
+    int estado = digitalRead(OBSTACLE_SENSOR);
+    if (estado == HIGH) {
+      // Si hay obstáculo, hacer parpadear LEDs
+      for (int i = 0; i < 6; i++) {
+        digitalWrite(leds[i], !digitalRead(leds[i]));
+      }
+      Serial.println("Obst: 1");
+    } else {
+      // Si no hay obstáculo, apagar LEDs
+      for (int i = 0; i < 6; i++) {
+        digitalWrite(leds[i], LOW);
+      }
+      Serial.println("Obst: 0");
+    }
+    delay(100);
+  }
+  else if (bandera2) {
+    // Sensor ultrasónico
+    int d = Ultrasonic();
+    int ledsEncendidos = d / 5;
+    for (int i = 0; i < 6; i++) {
+      if (i < ledsEncendidos) {
+        digitalWrite(leds[i], HIGH);
+      } else {
+        digitalWrite(leds[i], LOW);
+      }
+    }
+    Serial.print("Dist: ");
+    for (int i = 0; i < ledsEncendidos; i++) {
+      Serial.print("1 ");
+    }
+    for (int i = ledsEncendidos; i < 6; i++) {
+      Serial.print("0 ");
+    }
+    Serial.println();
+  }
+  else if (bandera3) {
+    // Sensor de luminosidad
+    val = analogRead(FotoR);    
+    int porcentaje = map(val, 0, 1023, 100, 0);
+    encenderLedsSegunLuminosidad(porcentaje);
+    Serial.print("Lum: ");
+    Serial.print(porcentaje);
+    Serial.println("%");
+  }
+  else {
+    Serial.println("Ningun sensor esta siendo tocado.");
+  }
+
+  delay(400);
+}
+
+// Función para encender LEDs según luminosidad
+void encenderLedsSegunLuminosidad(int porcentaje) {
+  int ledsEncender=0;
+  if(porcentaje != 100){
+    ledsEncender = porcentaje / 20;
+  } else {
+    ledsEncender=6;
+  }
+  int pwmUltimoLed = map(porcentaje % 20, 0, 20, 0, 255);
+
+  for (int i = 0; i < 6; i++) {
+    if (i < ledsEncender) {
+      analogWrite(leds[i], 255);
+    } else if (i == ledsEncender) {
+      analogWrite(leds[i], pwmUltimoLed);
+    } else {
+      analogWrite(leds[i], 0);
+    }
+  }
+}
