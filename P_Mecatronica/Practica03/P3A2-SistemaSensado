@@ -90,16 +90,28 @@ void loop() {
       for (int i = 0; i < 6; i++) {
         digitalWrite(leds[i], !digitalRead(leds[i]));
       }
-      Serial.println("Obst: 1");
-    } else {
-      // Si no hay obstáculo, apagar LEDs
-      for (int i = 0; i < 6; i++) {
-        digitalWrite(leds[i], LOW);
+      // Mostrar en el monitor serial
+      Serial.print("Obst: ");
+      Serial.print("1");
+      Serial.print(" ----- Dist: 0 0 0 0 0 0 ");
+      Serial.print("----- Lum: ");
+      Serial.print("0");
+      Serial.println("%");
+        } else {
+          // Si no hay obstáculo, apagar LEDs
+          for (int i = 0; i < 6; i++) {
+            digitalWrite(leds[i], LOW);
+          }
+          // Mostrar en el monitor serial
+          Serial.print("Obst: ");
+          Serial.print("0");
+          Serial.print(" ----- Dist: 0 0 0 0 0 0 ");
+          Serial.print("----- Lum: ");
+          Serial.print("0");
+          Serial.println("%");
+        }
+        delay(100);
       }
-      Serial.println("Obst: 0");
-    }
-    delay(100);
-  }
   else if (bandera2) {
     // Sensor ultrasónico
     int d = Ultrasonic();
@@ -111,27 +123,40 @@ void loop() {
         digitalWrite(leds[i], LOW);
       }
     }
-    Serial.print("Dist: ");
+    // Mostrar en el monitor serial
+    Serial.print("Obst: ");
+    Serial.print("0");
+    Serial.print(" ----- Dist: ");
     for (int i = 0; i < ledsEncendidos; i++) {
       Serial.print("1 ");
     }
     for (int i = ledsEncendidos; i < 6; i++) {
       Serial.print("0 ");
     }
-    Serial.println();
+    Serial.print("----- Lum: ");
+    Serial.print("0");
+    Serial.println("%");
   }
   else if (bandera3) {
     // Sensor de luminosidad
     val = analogRead(FotoR);    
     int porcentaje = map(val, 0, 1023, 100, 0);
     encenderLedsSegunLuminosidad(porcentaje);
-    Serial.print("Lum: ");
+    // Mostrar en el monitor serial
+    Serial.print("Obst: ");
+    Serial.print("0");
+    Serial.print(" ----- Dist: 0 0 0 0 0 0 ");
+    Serial.print("----- Lum: ");
     Serial.print(porcentaje);
     Serial.println("%");
   }
   else {
-    Serial.println("Ningun sensor esta siendo tocado.");
-  }
+	Serial.print("Obst: ");
+    Serial.print("0");
+    Serial.print(" ----- Dist: 0 0 0 0 0 0 ");
+    Serial.print("----- Lum: ");
+    Serial.print("0");
+    Serial.println("%");  }
 
   delay(400);
 }
