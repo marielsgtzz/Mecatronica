@@ -1,15 +1,15 @@
 // Definición de pines de los sensores y otros componentes
-#define SENSOR_1 A1
-#define SENSOR_2 A2
-#define SENSOR_3 A3
-#define OBSTACLE_SENSOR 12
-#define FotoR A0
-#define echoPin 13
+#define SENSOR_1 13
+#define SENSOR_2 12
+#define SENSOR_3 14
+#define OBSTACLE_SENSOR 35
+#define FotoR 34
+#define echoPin 16
 #define trigPin 2
 #define UMBRAL_LUMINOSIDAD 1013
 
 // Pines de los LEDs
-int leds[6] = {3, 5, 6, 9, 10, 11};
+int leds[6] = {15,4,5,18,19,21};
 
 // Variables globales
 int val; 
