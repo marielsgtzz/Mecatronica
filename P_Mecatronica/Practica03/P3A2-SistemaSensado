@@ -5,7 +5,7 @@
 #define OBSTACLE_SENSOR 35
 #define FotoR 34
 #define echoPin 16
-#define trigPin 2
+#define trigPin 17
 #define UMBRAL_LUMINOSIDAD 1013
 
 // Pines de los LEDs
