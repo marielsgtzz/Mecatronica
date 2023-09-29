@@ -29,6 +29,10 @@ void setup(){
   
   delay(1000);   // Espera 1000 milisegundos (1 segundo)
 }
+//No requerimos de esta funcion en esta actividad
+void loop(){
+  
+}
 
 // Define una función personalizada llamada textoRebota() que hace que el texto "Entre" del lado derecho hasta el extremo izquierdo
 void textoRebota(){
