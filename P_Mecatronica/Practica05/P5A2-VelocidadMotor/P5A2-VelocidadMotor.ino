@@ -10,6 +10,9 @@ int resolution = 12; // Resolución de la señal PWM
 int val;             // Para almacenar la lectura bruta del potenciómetro
 double vol;          // Para almacenar el valor leído del potenciómetro como un valor de voltaje
 String modoGiro;
+int speedDex;
+int speedLevo;
+int speed;
 
 void setup() {
   pinMode(EnM, OUTPUT);  // Configura el pin EnM como salida
@@ -34,27 +37,37 @@ void loop() {
   //El voltaje máximo que puede leer el ADC es 3.3V, entonces un valor de 4095 en el ADC corresponde a 3.3V.
   vol = (val*3.3)/4095; 
 
+  speedDex = map(val, 0, 4095, 0, 2000);  // Mapea el valor leído a un rango de PWM
+  speedLevo = map(val, 4095, 0, 0, 2000);  // Mapea el valor leído a un rango de PWM
+
+
   if (0 <= vol && vol< 1.32) { //el motor girará en sentido levógiro
     modoGiro = "Levogiro";
-    ledcWrite(channel, 2000);     // Establece el valor PWM en 1000
+    ledcWrite(channel, speedLevo);     // Establece el valor PWM en 1000
     digitalWrite(MA, LOW);       // Establece el pin MA en BAJO
     digitalWrite(MB, HIGH);      // Establece el pin MB en ALTO
+    speed = speedLevo;
   } else if (1.32 <= vol && vol < 1.98) { //el motor se quedará detenido
     modoGiro = "Detenido";
     ledcWrite(channel, 0);       // Establece el valor PWM en 0
     digitalWrite(MA, LOW);      // Establece el pin MA en ALTO
     digitalWrite(MB, LOW);       // Establece el pin MB en BAJO
+    speed = 0;
   } else { //el motor girará en sentido dextrogiro si se recibe un voltaje entre 1.98 y 3.3 V, 
     modoGiro = "Dextrogiro";
-    ledcWrite(channel, 2000);      // Establece el valor PWM en 1000
+    ledcWrite(channel, speedDex);      // Establece el valor PWM en 1000
     digitalWrite(MA, HIGH);       // Establece el pin MA en ALTO
     digitalWrite(MB, LOW);        // Establece el pin MB en BAJO
+    speed = speedDex;
   }
 
   Serial.print("Voltaje: "); 
   Serial.print(vol);
   Serial.print(" V --- ");
   Serial.print(modoGiro);
+  Serial.print(" --- ");
+  Serial.print(speed);
+  Serial.print("%");
   Serial.print("\n");
 
   delay(200); //Esperar 0.2 segundos
