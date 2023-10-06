@@ -46,7 +46,7 @@ void loop() {
     ledcWrite(channel, speedLevo);     // Establece el valor PWM en 1000
     digitalWrite(MA, LOW);       // Establece el pin MA en BAJO
     digitalWrite(MB, HIGH);      // Establece el pin MB en ALTO
-    speed = speedLevo;
+    speed = map(speedLevo, 0,2000,-150,100);
   } else if (1.32 <= vol && vol < 1.98) { //el motor se quedará detenido
     modoGiro = "Detenido";
     ledcWrite(channel, 0);       // Establece el valor PWM en 0
@@ -58,7 +58,8 @@ void loop() {
     ledcWrite(channel, speedDex);      // Establece el valor PWM en 1000
     digitalWrite(MA, HIGH);       // Establece el pin MA en ALTO
     digitalWrite(MB, LOW);        // Establece el pin MB en BAJO
-    speed = speedDex;
+    speed = map(speedDex, 0,2000,-150,100);
+
   }
 
   Serial.print("Voltaje: "); 
