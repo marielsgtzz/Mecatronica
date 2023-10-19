@@ -1,39 +1,86 @@
 //P6A2–Contador de Vueltas
+//enviar una señal al motor para que gire a una velocidad constante máxima
+//en sentido dextrógiro por 3 segundos, se detenga por 2 y gire en 
+//sentido levógiro a velocidad constante máxima durante 3 segundos y enseguida, se quede detenido por 2
 
-#define Rojo 4
-#define Amarillo 5
-#define Verde 15
-#define Button 23
+//El puente H va a estar leyendo la señal del encoder la cual emite pulsos en ambos sentidos de giro
 
-int factor = 1;
-int tiempo = 20;
+//El progama cuenta las vueltas que está realizando y muestra en el monitor serial qué tipo de giro es y cuántas vueltas van 
+//(Sentido dextrogiro - negativas) (Sentido levogiro - positivas)
 
-void IRAM_ATTR ISR(){
-  Serial.println("Botón presionado");
-  factor++;
+// Definición de pines
+#define EnM 13  // Pin para habilitar/deshabilitar el motor
+#define MA 12   // Pin de control A para el puente H
+#define MB 14   // Pin de control B para el puente H
+#define EncA 19 // Pin A del encoder
+#define EncB 18 // Pin B del encoder
+
+int channel = 0;     // Canal PWM que se usará
+int freq = 1000;     // Frecuencia de la señal PWM
+int resolution = 12; // Resolución de la señal PWM
+volatile long pulses = 0;  // Cuenta de pulsos del encoder
+const int PPR = 1920;      // Pulsos por revolución del eje de salida del reductor
+
+// Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
+void IRAM_ATTR PulsesCounter() {
+  if (digitalRead(EncB) == HIGH) {  // Si B es HIGH, sentido horario
+    pulses++;
+  } else {                           // Si B es LOW, sentido anti horario
+    pulses--;
+  }
 }
 
 void setup() {
-  pinMode(Rojo, OUTPUT);
-  pinMode(Amarillo, OUTPUT);
-  pinMode(Verde, OUTPUT);
-  pinMode(Button, INPUT);
+  // Configuración de pines de salida
+  pinMode(EnM, OUTPUT);
+  pinMode(MA, OUTPUT);
+  pinMode(MB, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(Button),ISR,RISING);
+  // Configuración de pines de entrada para el encoder
+  pinMode(EncA, INPUT);
+  pinMode(EncB, INPUT);
 
+  // Interrupción para contar pulsos del encoder
+  attachInterrupt(digitalPinToInterrupt(EncA), PulsesCounter, RISING);
+
+  // Configura el PWM
+  ledcSetup(channel, freq, resolution);
+  ledcAttachPin(EnM, channel);
+  
+  // Iniciar la comunicación serial
   Serial.begin(115200);
 }
 
 void loop() {
-  digitalWrite(Rojo, LOW);
-  digitalWrite(Verde, HIGH);
-  delay(factor*tiempo);
-  digitalWrite(Verde, LOW);
-  digitalWrite(Amarillo, HIGH);
-  delay(factor*tiempo);
-  digitalWrite(Amarillo, LOW);
-  digitalWrite(Rojo, HIGH);
-  delay(factor*tiempo);
-    
-  Serial.println(factor*tiempo);
+  // Girar a la derecha durante 3 segundos
+  ledcWrite(channel, 2000);
+  digitalWrite(MA, HIGH);
+  digitalWrite(MB, LOW);
+  Serial.print("Dextrogiro - Vueltas: ");
+  Serial.println(pulses / (float)PPR, 2);
+  delay(3000);
+
+  // Detenerse durante 2 segundos
+  ledcWrite(channel, 0);
+  digitalWrite(MA, LOW);
+  digitalWrite(MB, LOW);
+  Serial.print("Detenido - Vueltas: ");
+  Serial.println(pulses / (float)PPR, 2);
+  delay(2000);
+
+  // Girar a la izquierda durante 3 segundos
+  ledcWrite(channel, 2000);
+  digitalWrite(MA, LOW);
+  digitalWrite(MB, HIGH);
+  Serial.print("Levogiro - Vueltas: ");
+  Serial.println(pulses / (float)PPR, 2);
+  delay(3000);
+
+  // Detenerse nuevamente durante 2 segundos
+  ledcWrite(channel, 0);
+  digitalWrite(MA, LOW);
+  digitalWrite(MB, LOW);
+  Serial.print("Detenido - Vueltas: ");
+  Serial.println(pulses / (float)PPR, 2);
+  delay(2000);
 }
