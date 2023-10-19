@@ -19,7 +19,7 @@ int channel = 0;     // Canal PWM que se usará
 int freq = 1000;     // Frecuencia de la señal PWM
 int resolution = 12; // Resolución de la señal PWM
 volatile long pulses = 0;  // Cuenta de pulsos del encoder
-const int PPR = 1920;      // Pulsos por revolución del eje de salida del reductor
+const int PPR = 284;      // Pulsos por revolución del eje de salida del reductor
 
 // Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
 void IRAM_ATTR PulsesCounter() {
@@ -57,7 +57,7 @@ void loop() {
   digitalWrite(MA, HIGH);
   digitalWrite(MB, LOW);
   Serial.print("Dextrogiro - Vueltas: ");
-  Serial.println(pulses);
+  Serial.println(pulses / (float)PPR,2);
   delay(3000);
 
   // Detenerse durante 2 segundos
@@ -65,7 +65,7 @@ void loop() {
   digitalWrite(MA, LOW);
   digitalWrite(MB, LOW);
   Serial.print("Detenido - Vueltas: ");
-  Serial.println(pulses);
+  Serial.println(0);
   delay(2000);
 
   // Girar a la izquierda durante 3 segundos
@@ -74,7 +74,7 @@ void loop() {
   digitalWrite(MB, HIGH);
   analogWrite(EnM, 255);  // Velocidad máxima
   Serial.print("Levogiro - Vueltas: ");
-  Serial.println(pulses);
+  Serial.println(pulses / (float)PPR,2);
   delay(3000);
 
   // Detenerse nuevamente durante 2 segundos
@@ -82,6 +82,6 @@ void loop() {
   digitalWrite(MA, LOW);
   digitalWrite(MB, LOW);
   Serial.print("Detenido - Vueltas: ");
-  Serial.println(pulses);
+  Serial.println(0);
   delay(2000);
 }
