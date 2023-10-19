@@ -9,9 +9,9 @@
 //(Sentido dextrogiro - negativas) (Sentido levogiro - positivas)
 
 // Definición de pines
-#define EnM 13  // Pin para habilitar/deshabilitar el motor
-#define MA 12   // Pin de control A para el puente H
-#define MB 14   // Pin de control B para el puente H
+#define EnM 21  // Pin para habilitar/deshabilitar el motor
+#define MA 23   // Pin de control A para el puente H
+#define MB 22   // Pin de control B para el puente H
 #define EncA 19 // Pin A del encoder
 #define EncB 18 // Pin B del encoder
 
@@ -23,9 +23,9 @@ const int PPR = 1920;      // Pulsos por revolución del eje de salida del reduc
 
 // Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
 void IRAM_ATTR PulsesCounter() {
-  if (digitalRead(EncB) == HIGH) {  // Si B es HIGH, sentido horario
+  if(digitalRead(EncB)==HIGH){
     pulses++;
-  } else {                           // Si B es LOW, sentido anti horario
+  } else {
     pulses--;
   }
 }
@@ -57,7 +57,7 @@ void loop() {
   digitalWrite(MA, HIGH);
   digitalWrite(MB, LOW);
   Serial.print("Dextrogiro - Vueltas: ");
-  Serial.println(pulses / (float)PPR, 2);
+  Serial.println(pulses);
   delay(3000);
 
   // Detenerse durante 2 segundos
@@ -65,15 +65,16 @@ void loop() {
   digitalWrite(MA, LOW);
   digitalWrite(MB, LOW);
   Serial.print("Detenido - Vueltas: ");
-  Serial.println(pulses / (float)PPR, 2);
+  Serial.println(pulses);
   delay(2000);
 
   // Girar a la izquierda durante 3 segundos
   ledcWrite(channel, 2000);
   digitalWrite(MA, LOW);
   digitalWrite(MB, HIGH);
+  analogWrite(EnM, 255);  // Velocidad máxima
   Serial.print("Levogiro - Vueltas: ");
-  Serial.println(pulses / (float)PPR, 2);
+  Serial.println(pulses);
   delay(3000);
 
   // Detenerse nuevamente durante 2 segundos
@@ -81,6 +82,6 @@ void loop() {
   digitalWrite(MA, LOW);
   digitalWrite(MB, LOW);
   Serial.print("Detenido - Vueltas: ");
-  Serial.println(pulses / (float)PPR, 2);
+  Serial.println(pulses);
   delay(2000);
 }
