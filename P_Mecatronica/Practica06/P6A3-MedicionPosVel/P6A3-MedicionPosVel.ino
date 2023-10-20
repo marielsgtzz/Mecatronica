@@ -11,7 +11,7 @@ int channel = 0;     // Canal PWM que se usará
 int freq = 1000;     // Frecuencia de la señal PWM
 int resolution = 12; // Resolución de la señal PWM
 volatile long pulses = 0;  // Cuenta de pulsos del encoder
-const int PPR = 1920;      // Pulsos por revolución del eje de salida del reductor
+const int PPR = 284;      // Pulsos por revolución del eje de salida del reductor
 
 // Variables para el cálculo de velocidad
 float angulo;
