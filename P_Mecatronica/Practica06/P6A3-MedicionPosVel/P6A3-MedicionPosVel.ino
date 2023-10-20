@@ -103,11 +103,12 @@ void loop() {
   }
 }
 
-void enviarComandoMotor(int velocidad) {
-  analogWrite(EnM, velocidad);
+void enviarComandoMotor(int porcentaje) {
   // Giro levógiro
-  digitalWrite(MA, LOW);
-  digitalWrite(MB, HIGH);
+  int velocidad = 255*porcentaje/100;
+  ledcWrite(channel, 2000);
+  analogWrite(MA, 0);
+  analogWrite(MB, velocidad);
 }
 
 void calcularVelocidad() {
