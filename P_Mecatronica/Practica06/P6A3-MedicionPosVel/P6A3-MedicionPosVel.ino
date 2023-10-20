@@ -1,5 +1,7 @@
 // P6A3-MedicionPosVel
 
+#include <Arduino.h>
+
 // Definición de pines
 #define EnM 21  // Pin para habilitar/deshabilitar el motor
 #define MA 23   // Pin de control A para el puente H
@@ -11,13 +13,11 @@ int channel = 0;     // Canal PWM que se usará
 int freq = 1000;     // Frecuencia de la señal PWM
 int resolution = 12; // Resolución de la señal PWM
 volatile long pulses = 0;  // Cuenta de pulsos del encoder
-const int PPR = 1920;      // Pulsos por revolución del eje de salida del reductor
+const int PPR = 64;      // Pulsos por revolución del eje de salida del reductor
 
 int factor = 1;
 int tiempo = 20;
 int buttonstate;
-
-const int PPR = 1920; // Define el valor de pulsos por revolución del encoder
 
 // Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
 void IRAM_ATTR PulsesCounter() {
@@ -28,7 +28,6 @@ void IRAM_ATTR PulsesCounter() {
   }
 }
 
-long pulses = 0;
 unsigned long prevTime = micros(); // Variable para almacenar el tiempo previo en microsegundos
 
 void enviarComandoMotor(int velocidad) {
@@ -80,11 +79,6 @@ void imprimirResultados() {
 }
 
 void setup() {
-  pinMode(Rojo, OUTPUT);
-  pinMode(Amarillo, OUTPUT);
-  pinMode(Verde, OUTPUT);
-  pinMode(Button, INPUT);
-
   pinMode(MA, OUTPUT);
   pinMode(MB, OUTPUT);
   pinMode(EncA, INPUT);
