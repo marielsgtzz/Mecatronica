@@ -1,14 +1,17 @@
 // P6A3-MedicionPosVel
 
-// Definición de pines y variables
-#define motorPin1 ?  // Pin de control del motor
-#define motorPin2 ?  // Otro pin de control del motor
-#define encoderPinA ? // Pin de señal del encoder A
-#define encoderPinB ? // Pin de señal del encoder B
-#define Rojo ?
-#define Amarillo ?
-#define Verde ?
-#define Button ?
+// Definición de pines
+#define EnM 21  // Pin para habilitar/deshabilitar el motor
+#define MA 23   // Pin de control A para el puente H
+#define MB 22   // Pin de control B para el puente H
+#define EncA 19 // Pin A del encoder
+#define EncB 18 // Pin B del encoder
+
+int channel = 0;     // Canal PWM que se usará
+int freq = 1000;     // Frecuencia de la señal PWM
+int resolution = 12; // Resolución de la señal PWM
+volatile long pulses = 0;  // Cuenta de pulsos del encoder
+const int PPR = 1920;      // Pulsos por revolución del eje de salida del reductor
 
 int factor = 1;
 int tiempo = 20;
@@ -16,12 +19,21 @@ int buttonstate;
 
 const int PPR = 1920; // Define el valor de pulsos por revolución del encoder
 
+// Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
+void IRAM_ATTR PulsesCounter() {
+  if(digitalRead(EncB) == HIGH){
+    pulses++;
+  } else {
+    pulses--;
+  }
+}
+
 long pulses = 0;
 unsigned long prevTime = micros(); // Variable para almacenar el tiempo previo en microsegundos
 
 void enviarComandoMotor(int velocidad) {
-  analogWrite(motorPin1, velocidad);
-  analogWrite(motorPin2, 0);
+  analogWrite(MA, velocidad);
+  analogWrite(MB, 0);
 }
 
 void calcularVelocidad() {
@@ -73,40 +85,18 @@ void setup() {
   pinMode(Verde, OUTPUT);
   pinMode(Button, INPUT);
 
-  pinMode(motorPin1, OUTPUT);
-  pinMode(motorPin2, OUTPUT);
-  pinMode(encoderPinA, INPUT);
-  pinMode(encoderPinB, INPUT);
+  pinMode(MA, OUTPUT);
+  pinMode(MB, OUTPUT);
+  pinMode(EncA, INPUT);
+  pinMode(EncB, INPUT);
 
-  attachInterrupt(digitalPinToInterrupt(encoderPinA), PulsesCounter, RISING);
+  attachInterrupt(digitalPinToInterrupt(EncA), PulsesCounter, RISING);
 
   Serial.begin(115200);
 }
 
 void loop() {
-  digitalWrite(Rojo, LOW);
-  digitalWrite(Verde, HIGH);
-  delay(factor*tiempo);
-  digitalWrite(Verde, LOW);
-  digitalWrite(Amarillo, HIGH);
-  delay(factor*tiempo);
-  digitalWrite(Amarillo, LOW);
-  digitalWrite(Rojo, HIGH);
-  delay(factor*tiempo);
-
-  buttonstate = digitalRead(Button);
-
-  if (buttonstate){
-    Serial.println("Botón presionado");
-    factor++;
-    digitalWrite(ButLed,HIGH);
-    delay(tiempo);
-    digitalWrite(ButLed,LOW);
-    delay(tiempo);
-  }
-
-  Serial.println(factor*tiempo);
-
+  
   unsigned long tiempoActual = micros();
 
   if (tiempoActual - prevTime >= 100000) {
@@ -136,13 +126,5 @@ void loop() {
     imprimirResultados();
 
     prevTime = tiempoActual; // Actualiza el tiempo previo
-  }
-}
-
-void IRAM_ATTR PulsesCounter() {
-  if(digitalRead(encoderPinB) == HIGH) {
-    pulses++;
-  } else {
-    pulses--;
   }
 }
