@@ -1,0 +1,135 @@
+// P6A3-MedicionPosVel
+
+// Definición de pines
+#define EnM 21  // Pin para habilitar/deshabilitar el motor
+#define MA 23   // Pin de control A para el puente H
+#define MB 22   // Pin de control B para el puente H
+#define EncA 19 // Pin A del encoder
+#define EncB 18 // Pin B del encoder
+
+int channel = 0;     // Canal PWM que se usará
+int freq = 1000;     // Frecuencia de la señal PWM
+int resolution = 12; // Resolución de la señal PWM
+volatile long pulses = 0;  // Cuenta de pulsos del encoder
+const int PPR = 284;      // Pulsos por revolución del eje de salida del reductor    
+
+// Variables para el cálculo de velocidad
+float angulo = 0;
+float velocidad_rads = 0;
+float velocidad_rps = 0;
+float velocidad_rpm = 0;
+
+// Medición del tiempo
+int porcentaje = 0;
+unsigned long tiempoAnteriorA = 0;
+unsigned long tiempoAnteriorB = 0;
+unsigned long tiempoActual = 0;
+
+// Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
+void IRAM_ATTR PulsesCounter() {
+  if (digitalRead(EncB) == HIGH) {
+    pulses++;
+  } else {
+    pulses--;
+  }
+}
+
+void setup() {
+  // Configuración de pines de salida
+  pinMode(EnM, OUTPUT);
+  pinMode(MA, OUTPUT);
+  pinMode(MB, OUTPUT);
+
+  // Configuración de pines de entrada para el encoder
+  pinMode(EncA, INPUT);
+  pinMode(EncB, INPUT);
+
+  // Interrupción para contar pulsos del encoder
+  attachInterrupt(digitalPinToInterrupt(EncA), PulsesCounter, RISING);
+
+  // Configura el PWM
+  ledcSetup(channel, freq, resolution);
+  ledcAttachPin(EnM, channel);
+  
+  // Iniciar la comunicación serial
+  Serial.begin(115200);
+  tiempoActual = micros();
+}
+
+void loop() {
+  tiempoActual = micros(); // Usa directamente micros() para el tiempo en microsegundos
+  // Comprobación para imprimir en el monitor serial cada 100 ms
+  if (tiempoActual - tiempoAnteriorA == 100000) {
+    calcularVelocidad();
+    imprimirResultados();
+  }
+
+  // Comprobación para cambiar la velocidad del motor cada 3 segundos
+  if (tiempoActual - tiempoAnteriorB == 3000000) {
+    switch (porcentaje) {
+      case 0:
+        porcentaje = 10;
+        break;
+      case 1:
+        porcentaje = 30;
+        break;
+      case 2:
+        porcentaje = 50;
+        break;
+      case 3:
+        porcentaje = 100;
+        break;
+      case 4:
+        porcentaje = 0;
+        break;
+      default:
+        Serial.print("Error");
+        break;
+    }
+    tiempoAnteriorB = tiempoActual;
+  }
+  moverMotor();
+}
+
+void moverMotor() {  
+  int velocidad = (4095 * porcentaje) / 100;
+  ledcWrite(channel, velocidad);
+  digitalWrite(MA, LOW);
+  digitalWrite(MB, HIGH);
+}
+
+void calcularVelocidad() {
+  long currentPulses = pulses;
+
+  long deltaPulses = currentPulses - pulses;
+  unsigned long deltaTime = tiempoActual - tiempoAnteriorA;
+
+  float deltaTimeSeconds = float(deltaTime) / 1000000.0;
+
+  // Calcular ángulo en grados
+  angulo = (pulses % PPR) * 360.0 / PPR;
+
+  // Calcular velocidad angular en radianes por segundo
+  velocidad_rads = (pulses * 2 * PI) / (PPR * (deltaTime) / 1000000.0);
+
+  // Convertir velocidad a rps y rpm
+  velocidad_rps = velocidad_rads / (2 * PI);
+  velocidad_rpm = velocidad_rps * 60;
+
+  pulses = currentPulses; // Actualiza el valor de pulsos
+  tiempoAnteriorA = tiempoActual; // Actualiza el tiempo previo
+}
+
+void imprimirResultados(){
+    Serial.print("Pulsos: ");
+    Serial.print(pulses);
+    Serial.print(" --- Ángulo: ");
+    Serial.print(angulo);
+    Serial.print("° --- W: ");
+    Serial.print(velocidad_rps);
+    Serial.print(" [rps] --- ");
+    Serial.print(velocidad_rpm);
+    Serial.print(" [rpm] --- ");
+    Serial.print(velocidad_rads);
+    Serial.println(" [rad/s]");
+}
