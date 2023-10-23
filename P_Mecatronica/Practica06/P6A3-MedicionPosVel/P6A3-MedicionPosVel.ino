@@ -19,7 +19,6 @@ float velocidad_rads;
 float velocidad_rps;
 float velocidad_rpm;
 
-
 // Medición del tiempo
 unsigned long tiempoAnterior = micros(); // Variable para almacenar el tiempo previo en microsegundos
 unsigned long tiempoActual = 0; // Se actualiza al calcular la velocidad
@@ -105,10 +104,10 @@ void loop() {
 
 void enviarComandoMotor(int porcentaje) {
   // Giro levógiro
-  int velocidad = 255*porcentaje/100;
-  ledcWrite(channel, 2000);
-  analogWrite(MA, 0);
-  analogWrite(MB, velocidad);
+  int velocidad = 4095*porcentaje/100;
+  ledcWrite(channel, velocidad);
+  digitalWrite(MA, LOW);
+  digitalWrite(MB, HIGH);
 }
 
 void calcularVelocidad() {
