@@ -1,4 +1,4 @@
-// P6A3-MedicionPosVel
+// P6A3
 
 // Definición de pines
 #define EnM 21  // Pin para habilitar/deshabilitar el motor
@@ -7,27 +7,28 @@
 #define EncA 19 // Pin A del encoder
 #define EncB 18 // Pin B del encoder
 
-int channel = 0;     // Canal PWM que se usará
-int freq = 1000;     // Frecuencia de la señal PWM
-int resolution = 12; // Resolución de la señal PWM
-volatile long pulses = 0;  // Cuenta de pulsos del encoder
-const int PPR = 284;      // Pulsos por revolución del eje de salida del reductor
+int channel = 0;     
+int freq = 1000;     
+int resolution = 12; 
+volatile long pulses = 0;  
+const int PPR = 284;      
 
 // Variables para el cálculo de velocidad
-float angulo;
-float velocidad_rads;
-float velocidad_rps;
-float velocidad_rpm;
+int angulo = 0;
+int anguloAnterior = 0;
+float velocidad_rads = 0;
+float velocidad_rps = 0;
+float velocidad_rpm = 0;
 
 // Medición del tiempo
-unsigned long tiempoAnterior = micros(); // Variable para almacenar el tiempo previo en microsegundos
-unsigned long tiempoActual = 0; // Se actualiza al calcular la velocidad
-unsigned long tiempoCambioVelocidad = 3000000; // 3 segundos en microsegundos
-unsigned long tiempoCalculo = 100000; // 100 milisegundos en microsegundos
+int porcentaje = 0;
+unsigned long tiempoAnteriorA = 0;
+unsigned long tiempoAnteriorB = 0;
+unsigned long tiempoActual = 0;
 
 // Función que se llama cada vez que el pin A del encoder tiene un flanco ascendente
 void IRAM_ATTR PulsesCounter() {
-  if(digitalRead(EncB) == HIGH){
+  if (digitalRead(EncB) == HIGH) {
     pulses++;
   } else {
     pulses--;
@@ -53,87 +54,71 @@ void setup() {
   
   // Iniciar la comunicación serial
   Serial.begin(115200);
+  //tiempoActual = millis();
 }
-
-int etapa = 1;
 
 void loop() {
-  tiempoActual = micros();
+  tiempoActual = millis();
   
-  // Cambio de velocidad cada 3 segundos
-  if (tiempoActual - tiempoAnterior >= tiempoCambioVelocidad) {
-    switch(etapa) {
-      case 1:
-        // Etapa 1: Girar al 10%
-        enviarComandoMotor(25);
-        break;
-      case 2:
-        // Etapa 2: Girar al 30%
-        enviarComandoMotor(76);
-        break;
-      case 3:
-        // Etapa 3: Girar al 50%
-        enviarComandoMotor(128);
-        break;
-      case 4:
-        // Etapa 4: Girar al 100%
-        enviarComandoMotor(255);
-        break;
-      case 5:
-        // Etapa 5: Girar al 0%
-        enviarComandoMotor(0);
-        break;
-    }
-
-    etapa++; // Avanzar a la siguiente etapa
-
-    if(etapa > 5) {
-      etapa = 1; // Reiniciar si ya se completaron todas las etapas
-    }
-
-    tiempoAnterior = tiempoActual; // Actualiza el tiempo previo
-  }
-
-  // Cálculo de velocidad cada 100 milisegundos
-  if (tiempoActual - tiempoAnterior >= tiempoCalculo) {
+  // Comprobación para imprimir en el monitor serial cada 100 milisegundos
+  if (tiempoActual - tiempoAnteriorA == 100) {
     calcularVelocidad();
     imprimirResultados();
-    tiempoAnterior = tiempoActual; // Actualiza el tiempo previo
+    tiempoAnteriorA = tiempoActual; // Actualiza el tiempo previo
+    anguloAnterior = angulo; // Actualiza el ángulo previo
   }
+
+  // Comprobación para cambiar la velocidad del motor cada 3 segundos = 3000 milisegundos
+  if (tiempoActual - tiempoAnteriorB == 3000) {
+    switch (porcentaje) {
+      case 0:
+        porcentaje += 10;
+        break;
+      case 10:
+        porcentaje += 20;
+        break;
+      case 30:
+        porcentaje += 20;
+        break;
+      case 50:
+        porcentaje += 50;
+        break;
+      case 100:
+        porcentaje = 0;
+        break;
+      default:
+        Serial.print("Error");
+        break;
+    }
+    tiempoAnteriorB = tiempoActual;
+  }
+  moverMotor();
 }
 
-void enviarComandoMotor(int porcentaje) {
-  // Giro levógiro
-  int velocidad = 4095*porcentaje/100;
-  ledcWrite(channel, velocidad);
+void moverMotor() {  
+  int porcentajeVel = (4095 * porcentaje) / 100;
+  ledcWrite(channel, porcentajeVel);
   digitalWrite(MA, LOW);
   digitalWrite(MB, HIGH);
 }
 
 void calcularVelocidad() {
-  tiempoActual = micros();
-  long currentPulses = pulses;
-
-  long deltaPulses = currentPulses - pulses;
-  unsigned long deltaTime = tiempoActual - tiempoAnterior;
-
-  float deltaTimeSeconds = float(deltaTime) / 1000000.0;
+  
+  // Calcular cambio en tiempo
+  unsigned long deltaTime = (tiempoActual - tiempoAnteriorA)/1000; // Ajuste para que la diferencia de tiempo sea en segundos
 
   // Calcular ángulo en grados
-  angulo = (pulses % PPR) * 360.0 / PPR;
+  angulo = 360+(int(((pulses % PPR) * 360.0 / PPR)) % 360); // Ajuste para que el ángulo quede entre 0° y 359°
 
   // Calcular velocidad angular en radianes por segundo
-  velocidad_rads = (pulses * 2 * PI) / (PPR * (micros() - tiempoAnterior) / 1000000.0);
+  velocidad_rads = (((angulo - anguloAnterior))*PI)/(deltaTime*180); // Ajuste para que la diferencia de ángulo sea en radianes
 
   // Convertir velocidad a rps y rpm
   velocidad_rps = velocidad_rads / (2 * PI);
   velocidad_rpm = velocidad_rps * 60;
-
-  pulses = currentPulses; // Actualiza el valor de pulsos
-  tiempoAnterior = tiempoActual; // Actualiza el tiempo previo
 }
 
-void imprimirResultados() {  // Imprimir resultados en el monitor serial
+void imprimirResultados(){
   Serial.print("Pulsos: ");
   Serial.print(pulses);
   Serial.print(" --- Ángulo: ");
