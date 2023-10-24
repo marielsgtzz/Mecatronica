@@ -1,5 +1,3 @@
-// P6A3
-
 // Definición de pines
 #define EnM 21  // Pin para habilitar/deshabilitar el motor
 #define MA 23   // Pin de control A para el puente H
@@ -105,13 +103,13 @@ void moverMotor() {
 void calcularVelocidad() {
   
   // Calcular cambio en tiempo
-  unsigned long deltaTime = (tiempoActual - tiempoAnteriorA)/1000; // Ajuste para que la diferencia de tiempo sea en segundos
+  unsigned long deltaTime = (tiempoActual - tiempoAnteriorA);
 
   // Calcular ángulo en grados
   angulo = 360+(int(((pulses % PPR) * 360.0 / PPR)) % 360); // Ajuste para que el ángulo quede entre 0° y 359°
 
   // Calcular velocidad angular en radianes por segundo
-  velocidad_rads = (((angulo - anguloAnterior))*PI)/(deltaTime*180); // Ajuste para que la diferencia de ángulo sea en radianes
+  velocidad_rads = (float(angulo - anguloAnterior) * PI) / ((180*deltaTime) / 1000); // Ajuste para que la diferencia de ángulo sea en radianes
 
   // Convertir velocidad a rps y rpm
   velocidad_rps = velocidad_rads / (2 * PI);
