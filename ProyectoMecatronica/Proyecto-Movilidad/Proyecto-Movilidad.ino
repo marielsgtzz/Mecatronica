@@ -14,7 +14,7 @@ String comando;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Crea un objeto lcd de la clase LiquidCrystal_I2C, con la dirección I2C 0x27 y especifica que la pantalla tiene 16 columnas y 2 filas
 
-//Puertos
+//Puertos Motores
 #define ENA1 14
 #define InB2 27 //MB
 #define InA2 26 //MA
@@ -67,22 +67,27 @@ void loop() {
       Serial.println("ADELANTE");
       lcd.clear(); // Limpia el contenido de la pantalla LCD
       lcd.print("ADELANTE"); // Imprime el primer nombre en la fila 0
+      adelante();
     } else if(comandoMov=='3' || comandoMov=='6'){
       Serial.println("ATRAS");
       lcd.clear();
       lcd.print("ATRAS"); 
+      atras();
     } else if(comandoMov=='2' || comandoMov=='8'){
       Serial.println("DERECHA");
       lcd.clear();
       lcd.print("DERECHA"); 
+      derecha();
     } else if(comandoMov=='4' || comandoMov=='0'){
       Serial.println("IZQUIERDA");
       lcd.clear();
       lcd.print("IZQUIERDA"); 
+      izquierda();
     } else {
       Serial.println("DETENIDO");
       lcd.clear(); 
       lcd.print("DETENIDO"); 
+      detenido();
     }
     delay(20);
   }
@@ -97,55 +102,53 @@ void adelante(){
   digitalWrite(InA2, LOW);
   digitalWrite(InB2, HIGH);
 
-  Serial.println("ADELANTE");
+  delay(1000);
+}
+
+void atras(){
+  digitalWrite(InA1, HIGH);
+  digitalWrite(InB1, LOW);
+
+  digitalWrite(InA2, HIGH);
+  digitalWrite(InB2, LOW);
+
+  Serial.println("ATRAS");
 
   delay(1000);
 }
 
-// void atras(){
-//   digitalWrite(InA1, HIGH);
-//   digitalWrite(InB1, LOW);
+void derecha(){
+  digitalWrite(InA1, HIGH);
+  digitalWrite(InB1, LOW);
 
-//   digitalWrite(InA2, HIGH);
-//   digitalWrite(InB2, LOW);
+  digitalWrite(InA2, LOW);
+  digitalWrite(InB2, LOW);
 
-//   Serial.println("ATRAS");
+  Serial.println("DERECHA");
 
-//   delay(1000);
-// }
+  delay(1000);
+}
 
-// void derecha(){
-//   digitalWrite(InA1, HIGH);
-//   digitalWrite(InB1, LOW);
+void izquierda(){
+  digitalWrite(InA1, LOW);
+  digitalWrite(InB1, LOW);
 
-//   digitalWrite(InA2, LOW);
-//   digitalWrite(InB2, LOW);
+  digitalWrite(InA2, HIGH);
+  digitalWrite(InB2, LOW);
 
-//   Serial.println("DERECHA");
+  Serial.println("IZQUIERDA");
 
-//   delay(1000);
-// }
+  delay(1000);
+}
 
-// void izquierda(){
-//   digitalWrite(InA1, LOW);
-//   digitalWrite(InB1, LOW);
+void detenido(){
+  digitalWrite(InA1, LOW);
+  digitalWrite(InB1, LOW);
 
-//   digitalWrite(InA2, HIGH);
-//   digitalWrite(InB2, LOW);
+  digitalWrite(InA2, LOW);
+  digitalWrite(InB2, LOW);
 
-//   Serial.println("IZQUIERDA");
+  Serial.println("ALTO");
 
-//   delay(1000);
-// }
-
-// void detenido(){
-//   digitalWrite(InA1, LOW);
-//   digitalWrite(InB1, LOW);
-
-//   digitalWrite(InA2, LOW);
-//   digitalWrite(InB2, LOW);
-
-//   Serial.println("ALTO");
-
-//   delay(1000);
-// }
+  delay(1000);
+}
