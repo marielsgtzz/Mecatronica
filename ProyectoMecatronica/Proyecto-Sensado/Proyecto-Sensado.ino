@@ -27,6 +27,25 @@ void loop() {
   luzDetectadaIzq = analogRead(fotoresistorIzq);
   luzDetectadaDer = analogRead(fotoresistorDer);
 
+  Fotoresistor(luzDetectadaIzq,luzDetectadaDer);
+}
+
+void monitorSerial(){
+  //Serial.print("Pulsos_Enc_Izq:"+String(XXX)+" | Pulsos_Enc_Der:"+ String(XXX)+" | Obst:"+String(0 0 0 0)+" | Distancia:"+String(XX)); 
+}
+
+void LCD(){
+  lcd.setCursor(0,0);   // Establece la posición del cursor en la columna 0, fila 0
+  lcd.print("0 0 0 0 | L:XXX");
+}
+
+void Fotoresistor(int fotoResistorIzq, int fotoResistorDer){
+  lcd.setCursor(0,1);
+  lcd.print("I:" + String(luzDetectadaIzq) + " | D:" + String(luzDetectadaDer));
+  delay(1000);
+
+  Serial.print("LDR_Izq:"+String(luzDetectadaIzq)+" | LDR_Der:"+String(luzDetectadaDer)+" |");
+
   Serial.print("Luz detectada por el fotoresistor Izq: ");
   Serial.print(luzDetectadaIzq); 
   Serial.print("|| ");
@@ -34,10 +53,6 @@ void loop() {
   Serial.print(luzDetectadaDer); 
   Serial.println();
   delay(250);
-}
-
-void Fotoresistor(){
-
 }
 
 void Ultrasonico(){
