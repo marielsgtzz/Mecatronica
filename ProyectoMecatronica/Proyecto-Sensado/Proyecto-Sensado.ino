@@ -14,12 +14,25 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // Crea un objeto lcd de la clase LiquidCrys
 #define infrarojo2 17
 #define infrarojo3 18
 #define infrarojo4 19
+#define ENA1 14 //Encoder (2 derecha, 1 izquierda)
+#define InB2 27 //MB
+#define InA2 26 //MA
+#define InB1 25 //MB
+#define InA1 33 //MA
+#define ENA2 32
+#define EncA1 4 // Pin A del encoder 1
+#define EncA2 15 // Pin A del encoder 2
+#define EncB1 2 // Pin B del encoder 1
+#define EncB2 16 // Pin B del encoder 2
+
 //Variables
 int luzDetectadaIzq;
 int luzDetectadaDer;
 int duracionUltrasonico;
 int distanciaUltrasonico;
 bool infra1, infra2, infra3, infra4;
+volatile long pulsesDer = 0;
+volatile long pulsesIzq = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -32,23 +45,37 @@ void setup() {
   pinMode (infrarojo2, INPUT);
   pinMode (infrarojo3, INPUT);
   pinMode (infrarojo4, INPUT);
+  pinMode(ENA1, OUTPUT);
+  pinMode(InA1, OUTPUT);
+  pinMode(InB1, OUTPUT);
+  pinMode(ENA2, OUTPUT);
+  pinMode(InA2, OUTPUT);
+  pinMode(InB2, OUTPUT);
+  pinMode(EncA1, INPUT); // Configuración del encoder
+  pinMode(EncB1, INPUT);
+  pinMode(EncA2, INPUT); 
+  pinMode(EncB2, INPUT);
   lcd.init();   // Inicializa el LCD
   lcd.backlight();   // Enciende la retroiluminación del LCD
 }
 void loop() {
-  luzDetectadaIzq = analogRead(fotoresistorIzq);
-  luzDetectadaDer = analogRead(fotoresistorDer);
-  Fotoresistor(luzDetectadaIzq,luzDetectadaDer);
+  attachInterrupt(digitalPinToInterrupt(EncA1), Encoder_izquierdo, RISING);
+  attachInterrupt(digitalPinToInterrupt(EncA2), Encoder_derecho, RISING);
+
+  monitorSerialPulsos();
+  Fotoresistor();
   Ultrasonico();
   Obstaculos();
   Serial.println();
 }
 
-void monitorSerial(){
-  //Serial.print("Pulsos_Enc_Izq:"+String(XXX)+" | Pulsos_Enc_Der:"+ String(XXX)+" | ); 
+void monitorSerialPulsos(){
+  Serial.print("Pulsos_Enc_Izq:"+String(pulsesIzq)+" | Pulsos_Enc_Der:"+String(pulsesDer)+" | ");  
 }
 
-void Fotoresistor(int fotoResistorIzq, int fotoResistorDer){
+void Fotoresistor(){
+  luzDetectadaIzq = analogRead(fotoresistorIzq);
+  luzDetectadaDer = analogRead(fotoresistorDer);
   lcd.setCursor(0,1);
   lcd.print("I:" + String(luzDetectadaIzq) + " | D:" + String(luzDetectadaDer));
   delay(1000);
@@ -97,9 +124,18 @@ void Obstaculos(){
 }
 
 void Encoder_izquierdo(){
-
+  if(digitalRead(EncB1)==HIGH){
+      pulsesIzq++;
+  } else {
+    pulsesIzq--;
+  }  
 }
 
 void Encoder_derecho(){
+  if(digitalRead(EncB2)==HIGH){
+    pulsesDer++;
+  } else {
+    pulsesDer--;
+  }
 
 }
