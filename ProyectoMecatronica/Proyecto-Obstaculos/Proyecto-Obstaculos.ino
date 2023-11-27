@@ -38,6 +38,7 @@ int distanciaUltrasonico;
 bool infra1, infra2, infra3, infra4;
 volatile long pulsesDer = 0;
 volatile long pulsesIzq = 0;
+bool evitarObstaculo = false;
 
 // Variables globales para el control de tiempo
 unsigned long tiempoActual;
@@ -45,15 +46,6 @@ unsigned long tiempoInicioAtras;
 unsigned long tiempoInicioGiro;
 bool enMovimientoAtras = false;
 bool enGiro = false;
-enum EstadoRobot {
-  Normal,
-  EvasionObstaculos,
-  MovimientoAtras,
-  Giro
-};
-
-EstadoRobot estadoActual = Normal;
-
 
 void setup() {
   Serial.begin(115200);
@@ -111,45 +103,50 @@ void loop()
   }
   
   tiempoActual = millis();
-  if(hayObstaculo){
-  // Inicia movimiento hacia atrás si se detecta un obstáculo y no está en movimiento
-    if (hayObstaculo && !enMovimientoAtras && !enGiro) {
+  if (hayObstaculo || evitarObstaculo ) {
+    evitarObstaculo = true;
+    // Inicia movimiento hacia atrás si se detecta un obstáculo y no está en movimiento
+    if (!enMovimientoAtras && !enGiro) {
+      detenido();
       tiempoInicioAtras = millis();
       enMovimientoAtras = true;
-      // Se mueve hacia atrás por un tiempo determinado
-      if (enMovimientoAtras && (tiempoActual - tiempoInicioAtras > 2000)) {
-        atras();
-        tiempoInicioGiro = millis();
-        enMovimientoAtras = false;
-        enGiro = true;
-        // Inicia giro después de moverse hacia atrás
-        if (enGiro && (tiempoActual - tiempoInicioGiro > 2000)) {
-          if (hayObstaculoIzq) {
-            derecha();
-          } else {
-            izquierda();
-          }
-          enGiro = false;
-        }
-      }
     }
-  } else {
+
+    // Se mueve hacia atrás por un tiempo determinado
+    if (enMovimientoAtras && (tiempoActual - tiempoInicioAtras > 1250)) {
+      atras();
+      tiempoInicioGiro = millis();
+      enMovimientoAtras = false;
+      enGiro = true;
+    }
+
+    // Inicia giro después de moverse hacia atrás
+    if (enGiro && (tiempoActual - tiempoInicioGiro > 2000)) {
+      if (hayObstaculoIzq) {
+        izquierda();
+      } else {
+        derecha();
+      }
+      enGiro = false;
+      evitarObstaculo = false;
+    }
+  } else {// Seguir la luz
+
     if(luzDetectadaIzq==4095 && luzDetectadaDer==4095){
         detenido(); //Ya llegó a la fuente de luz
-      } else {
+    } else {
         int diff = abs(luzDetectadaIzq-luzDetectadaDer);
-        //FUNCIONES PARA MOVER LOS MOTORES DE ACUERDO A LA LECTURA DE LOS LDR--->SEGUIR LUZ
+        // Mueve los motores según la lectura de los LDR
         if(diff<=200){
           adelante();
         } else if (luzDetectadaIzq < luzDetectadaDer){
           derecha();
-          // Si la luz está a la derecha, girar hacia la derecha
         } else if (luzDetectadaIzq > luzDetectadaDer) {
           izquierda();
         } else {
           detenido();
         }
-      }
+    }
   }
   
   
