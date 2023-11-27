@@ -45,6 +45,15 @@ unsigned long tiempoInicioAtras;
 unsigned long tiempoInicioGiro;
 bool enMovimientoAtras = false;
 bool enGiro = false;
+enum EstadoRobot {
+  Normal,
+  EvasionObstaculos,
+  MovimientoAtras,
+  Giro
+};
+
+EstadoRobot estadoActual = Normal;
+
 
 void setup() {
   Serial.begin(115200);
@@ -93,51 +102,57 @@ void loop()
   bool hayObstaculoEnfrente = (distanciaUltrasonico < 11); 
   bool hayObstaculoIzq = !infra1;
   bool hayObstaculoDer = !infra4;
-
-  tiempoActual = millis();
-  
-  if(luzDetectadaIzq==4095 && luzDetectadaDer==4095){
-    detenido(); //Ya llegó a la fuente de luz
-  } else if(hayObstaculoIzq){
-    // // millis(500); // Espera un momento para asegurarse de que el robot se detiene completamente
-
-    atras();
-    // millis(500);
-
-    derecha();
-
-    adelante();
-    // millis(500);
-  }else if(hayObstaculoDer){
-    // millis(500); // Espera un momento para asegurarse de que el robot se detiene completamente
-
-    atras();
-    // millis(500);
-
-    izquierda();
-
-    adelante();
-    // millis(500);
-  } else if(hayObstaculoEnfrente) {
-    // millis(500); 
-
-    atras();
-    // millis(1500); 
-    evitarObstaculoEnfrente(hayObstaculoIzq,hayObstaculoDer);
-  }else {
-    int diff = abs(luzDetectadaIzq-luzDetectadaDer);
-    //FUNCIONES PARA MOVER LOS MOTORES DE ACUERDO A LA LECTURA DE LOS LDR--->SEGUIR LUZ
-    if(diff<=200){
-      adelante();
-    } else if (luzDetectadaIzq < luzDetectadaDer){
-      derecha();
-      // Si la luz está a la derecha, girar hacia la derecha
-    } else if (luzDetectadaIzq > luzDetectadaDer) {
-      izquierda();
-    } else {
-      detenido();
-    }
+  bool hayObstaculo = hayObstaculoEnfrente || hayObstaculoIzq || hayObstaculoDer;
+  lcd.setCursor(8,0); 
+  if(hayObstaculo){
+    lcd.print("O:T");
+  } else {
+    lcd.print("O:F");
   }
+  
+  tiempoActual = millis();
+  if(hayObstaculo){
+  // Inicia movimiento hacia atrás si se detecta un obstáculo y no está en movimiento
+    if (hayObstaculo && !enMovimientoAtras && !enGiro) {
+      tiempoInicioAtras = millis();
+      enMovimientoAtras = true;
+      // Se mueve hacia atrás por un tiempo determinado
+      if (enMovimientoAtras && (tiempoActual - tiempoInicioAtras > 2000)) {
+        atras();
+        tiempoInicioGiro = millis();
+        enMovimientoAtras = false;
+        enGiro = true;
+        // Inicia giro después de moverse hacia atrás
+        if (enGiro && (tiempoActual - tiempoInicioGiro > 2000)) {
+          if (hayObstaculoIzq) {
+            derecha();
+          } else {
+            izquierda();
+          }
+          enGiro = false;
+        }
+      }
+    }
+  } else {
+    if(luzDetectadaIzq==4095 && luzDetectadaDer==4095){
+        detenido(); //Ya llegó a la fuente de luz
+      } else {
+        int diff = abs(luzDetectadaIzq-luzDetectadaDer);
+        //FUNCIONES PARA MOVER LOS MOTORES DE ACUERDO A LA LECTURA DE LOS LDR--->SEGUIR LUZ
+        if(diff<=200){
+          adelante();
+        } else if (luzDetectadaIzq < luzDetectadaDer){
+          derecha();
+          // Si la luz está a la derecha, girar hacia la derecha
+        } else if (luzDetectadaIzq > luzDetectadaDer) {
+          izquierda();
+        } else {
+          detenido();
+        }
+      }
+  }
+  
+  
 }
 
 void evitarObstaculoEnfrente(bool hayObstaculoIzq,bool hayObstaculoDer){
