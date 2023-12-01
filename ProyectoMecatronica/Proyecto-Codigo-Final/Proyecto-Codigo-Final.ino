@@ -58,7 +58,7 @@ void setup() {
   pinMode (infrarojo2, INPUT);
   pinMode (infrarojo3, INPUT);
   pinMode (infrarojo4, INPUT);
-  pinMode(ENA1, OUTPUT);
+  pinMode(ENA1, OUTPUT); // Motores
   pinMode(InA1, OUTPUT);
   pinMode(InB1, OUTPUT);
   pinMode(ENA2, OUTPUT);
@@ -80,21 +80,23 @@ void setup() {
 }
 void loop()
  {
+  // Realiza la lectura de los sensores de luz
   luzDetectadaIzq = analogRead(fotoresistorIzq);
   luzDetectadaDer = analogRead(fotoresistorDer);
-  Ultrasonico();
+  Ultrasonico();   // Ejecuta la función que mide la distancia con el sensor ultrasónico y muestra en LCD las lecturas
+  // Configura las interrupciones para los encoders
   attachInterrupt(digitalPinToInterrupt(EncA1), Encoder_izquierdo, RISING);
   attachInterrupt(digitalPinToInterrupt(EncA2), Encoder_derecho, RISING);
-  monitorSerialPulsos();
-  Fotoresistor();
-  Obstaculos();
-  Serial.println();
+  Fotoresistor();   // Realiza la lectura de los sensores fotoresistores y muestra en LCD las lecturas
+  Obstaculos();    // Realiza la lectura de los sensores infrarrojos y muestra en LCD las lecturas
   
   // Detección de obstáculos
-  bool hayObstaculoEnfrente = (distanciaUltrasonico < 12); 
-  bool hayObstaculoIzq = !infra1;
-  bool hayObstaculoDer = !infra4;
-  bool hayObstaculo = hayObstaculoEnfrente || hayObstaculoIzq || hayObstaculoDer;
+  bool hayObstaculoEnfrente = (distanciaUltrasonico < 12); // Detecta obstáculo al frente si la distancia es menor a 12 cm
+  bool hayObstaculoIzq = !infra1; // Detecta obstáculo a la izquierda si infra1 es falso
+  bool hayObstaculoDer = !infra4; // Detecta obstáculo a la derecha si infra4 es falso
+  bool hayObstaculo = hayObstaculoEnfrente || hayObstaculoIzq || hayObstaculoDer; // Determina si hay algún obstáculo
+
+  // Muestra en LCD si hay obstáculos
   lcd.setCursor(8,0); 
   if(hayObstaculo){
     lcd.print("O:T");
@@ -103,6 +105,7 @@ void loop()
   }
   
   tiempoActual = millis();
+    // Procesamiento de evasión de obstáculos
   if (hayObstaculo || evitarObstaculo ) {
     evitarObstaculo = true;
     // Inicia movimiento hacia atrás si se detecta un obstáculo y no está en movimiento
@@ -112,6 +115,7 @@ void loop()
       enMovimientoAtras = true;
     }
 
+    // Mueve el robot hacia atrás por un tiempo determinado
     if (enMovimientoAtras && (tiempoActual - tiempoInicioAtras > 750)) {
       atras();
       if (!enGiro) {
@@ -121,13 +125,14 @@ void loop()
       enMovimientoAtras = false;
     }
 
+    // Ejecuta el giro y determina la duración del mismo
     if (enGiro && (tiempoActual - tiempoInicioGiro > 750)) {  
-      // if (enGiro) {  
         if (hayObstaculoIzq) {
             derecha();
         } else if (hayObstaculoDer){
             izquierda(); 
         } else {
+          // Si no hay un obstáculo claro a izquierda o derecha, elige la dirección en base a la luz detectada
           if (luzDetectadaIzq > luzDetectadaDer) {
             izquierda(); 
           } else {
@@ -136,39 +141,19 @@ void loop()
         }
     }
 
-    if (tiempoActual - tiempoInicioGiro > 750) {  // Duración del giro, ajustar según sea necesario
+    // Finaliza el giro tras 750 ms
+    if (tiempoActual - tiempoInicioGiro > 750) {  
         enGiro = false;
         evitarObstaculo = false;
-        adelante();
+        adelante(); // Continúa moviéndose hacia adelante después de evitar el obstáculo
     }
-
-  //   // Se mueve hacia atrás por un tiempo determinado
-  //  if (enMovimientoAtras && (tiempoActual - tiempoInicioAtras > 750)) {
-  //     atras();
-  //     if (!enGiro) {
-  //       tiempoInicioGiro = millis();  // Inicia el tiempo del giro después de moverse hacia atrás
-  //       enGiro = true;
-  //     }
-  //     enMovimientoAtras = false;
-  //   }
-
-  //   // Inicia giro después de moverse hacia atrás
-  //   if (enGiro && (tiempoActual - tiempoInicioGiro > 1500)) {  
-  //     if (hayObstaculoIzq) {
-  //       izquierda();
-  //     } else {
-  //       derecha();
-  //     }
-  //     enGiro = false;
-  //     evitarObstaculo = false;
-  //   }
-  } else {// Seguir la luz
+  } else {// Lógica para que el robot se mueva siguiendo la luz
 
     if(luzDetectadaIzq==4095 && luzDetectadaDer==4095){
-        detenido(); //Ya llegó a la fuente de luz
+        detenido(); // Se detiene si ambos sensores detectan la máxima intensidad de luz
     } else {
         int diff = abs(luzDetectadaIzq-luzDetectadaDer);
-        // Mueve los motores según la lectura de los LDR
+        // Controla los motores en función de la diferencia en la lectura de los LDR
         if(diff<=300){
           adelante();
         } else if (luzDetectadaIzq < luzDetectadaDer){
@@ -184,25 +169,9 @@ void loop()
   
 }
 
-void evitarObstaculoEnfrente(bool hayObstaculoIzq,bool hayObstaculoDer){
-  atras();
-  if(hayObstaculoIzq){
-    derecha();
-    adelante();
-    izquierda();
-    adelante();
-  } else {
-    izquierda();
-    adelante();
-    derecha();
-    adelante();
-  }
-}
+//Lectura de sensores y display en LCD
 
-void monitorSerialPulsos(){
-  Serial.print("Pulsos_Enc_Izq:"+String(pulsesIzq)+" | Pulsos_Enc_Der:"+String(pulsesDer)+" | ");  
-}
-
+//Toma la información de los fotorresistores y la muestra en el display
 void Fotoresistor()
 {
   luzDetectadaIzq = analogRead(fotoresistorIzq);
@@ -255,6 +224,7 @@ void Obstaculos(){
   lcd.print(String(obstaculo[0])+" "+String(obstaculo[1])+" "+String(obstaculo[2])+" "+String(obstaculo[3]));
 }
 
+//Lectura de pulsos de encoders
 void Encoder_izquierdo(){
   if(digitalRead(EncB1)==HIGH){
       pulsesIzq++;
@@ -271,6 +241,7 @@ void Encoder_derecho() {
   }
 }
 
+//Logicas de movimiento para los motores
 void adelante() {
   ledcWrite(channel0, 80);
   digitalWrite(InA1, LOW);
